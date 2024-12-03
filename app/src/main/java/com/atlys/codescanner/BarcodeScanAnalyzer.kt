@@ -2,6 +2,7 @@ package com.atlys.codescanner
 
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
@@ -36,6 +37,10 @@ class BarcodeScanAnalyzer(
             croppedBitmap = Bitmap.createBitmap(
                 croppedBitmap, 0, 0, croppedBitmap.width, croppedBitmap.height,
                 matrix, true
+            )
+            Log.e(
+                "RESULT",
+                " image-[${imageProxy.width}-${imageProxy.height}] bitmap-[${bitmapBuffer.width}-${bitmapBuffer.height}] cropped-[${croppedBitmap.width}-${croppedBitmap.height}] preview-[${previewView.width}-${previewView.height}] crop-$cropRect"
             )
             val inputImage = InputImage.fromBitmap(croppedBitmap, 0)
             val scanTask = barcodeScanner.process(inputImage)
