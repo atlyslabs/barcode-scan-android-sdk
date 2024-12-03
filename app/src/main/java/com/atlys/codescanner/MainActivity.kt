@@ -92,7 +92,8 @@ class MainActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             viewModel.barcodeResults.collectLatest {
-                showBottomSheet(it)
+                if (it.isNotEmpty())
+                    showBottomSheet(it)
             }
         }
     }
