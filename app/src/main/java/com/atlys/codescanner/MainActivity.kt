@@ -5,19 +5,21 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.view.LifecycleCameraController
@@ -26,9 +28,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.atlys.codescanner.databinding.ActivityMainBinding
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -37,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     private var cameraExecutor: ExecutorService? = null
     private var barcodeScanner: BarcodeScanner? = null
+    private val viewModel: MainViewModel by viewModels()
 
     private val applicationSettings =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -56,6 +63,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    private val pickFileLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            // Handle the selected file URI
+            uri?.let { viewModel.onFileSelected(uri) }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,6 +87,20 @@ class MainActivity : AppCompatActivity() {
             toast("Please grant camera permission")
             requestCameraPermission()
         }
+        viewBinding.buttonSelectFile.onClick {
+            pickFileLauncher.launch(ValidMimeTypes.toTypedArray())
+        }
+        lifecycleScope.launch {
+            viewModel.barcodeResults.collectLatest {
+                showBottomSheet(it)
+            }
+        }
+    }
+
+    private fun showBottomSheet(barcodeResults: List<BarcodeResult>) {
+        val bottomSheet = ScanResultBottomSheetFragment()
+        bottomSheet.barcodeResults = barcodeResults
+        bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
     private fun requestCameraPermission() {
@@ -136,4 +162,14 @@ private fun shouldShowRequestPermissionRationale(activity: Activity): Boolean {
         activity,
         Manifest.permission.CAMERA
     )
+}
+
+fun View.onClick(onClick: () -> Unit) {
+    this.setOnClickListener { onClick() }
+}
+
+fun File.saveBitmap(bitmap: Bitmap) {
+    this.outputStream().use { outputStream ->
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+    }
 }
