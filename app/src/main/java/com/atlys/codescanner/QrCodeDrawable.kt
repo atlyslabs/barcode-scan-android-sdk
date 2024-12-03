@@ -13,7 +13,7 @@ import com.google.mlkit.vision.barcode.common.Barcode
  * A Drawable that handles displaying a QR Code's data and a bounding box around the QR code.
  */
 class QrCodeDrawable(
-    private val barcode: Barcode,
+    private val barcodes: List<Barcode>,
     private val scaleX: Float,
     private val scaleY: Float
 ) : Drawable() {
@@ -37,9 +37,14 @@ class QrCodeDrawable(
     }
 
     private val contentPadding = 25
-    private var textWidth = contentTextPaint.measureText(barcode.rawValue).toInt()
 
     override fun draw(canvas: Canvas) {
+        barcodes.forEach { barcode ->
+            drawQrBounds(canvas, barcode)
+        }
+    }
+
+    private fun drawQrBounds(canvas: Canvas, barcode: Barcode) {
         val boundingBox = barcode.boundingBox!!
 
         // Map the bounding box coordinates to the Canvas
@@ -50,6 +55,7 @@ class QrCodeDrawable(
             boundingBox.bottom * scaleY
         )
         canvas.drawRect(boundingRect, boundingRectPaint)
+        val textWidth = contentTextPaint.measureText(barcode.rawValue).toInt()
         canvas.drawRect(
             RectF(
                 boundingRect.left,
