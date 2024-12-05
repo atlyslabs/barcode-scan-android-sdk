@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.graphics.pdf.PdfRenderer.Page
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.tasks.Tasks
@@ -31,11 +32,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onFileSelected(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
+            val fileName = getFileName(context, uri)
+            val fileExtension = getFileExtension(fileName)
             val mimeType = context.contentResolver.getType(uri)
-            if (mimeType == MimeType.PDF)
+            if (mimeType == MimeType.PDF || (mimeType == MimeType.OCTET_STREAM && fileExtension == "pdf"))
                 scanPdf(uri)
-            else
+            else if (ImageMimeTypes.contains(mimeType))
                 scanImage(uri)
+            else
+                withContext(Dispatchers.Main) {
+                    context.toast("Unsupported file format")
+                }
         }
     }
 
@@ -82,7 +89,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return bitmaps
     }
 
-    private fun detectBarCode(bitmap: Bitmap):List<BarcodeResult> {
+    private fun detectBarCode(bitmap: Bitmap): List<BarcodeResult> {
         val scanTask = barcodeScanner.process(bitmap, 0)
         val barcodes = Tasks.await(scanTask)
         return barcodes.map { getBarcodeResult(bitmap, it) }
@@ -115,16 +122,25 @@ object MimeType {
     const val GIF = "image/gif"
     const val TIFF = "image/tiff"
     const val PDF = "application/pdf"
+
+    // Some pdf files have this type
+    const val OCTET_STREAM = "binary/octet-stream"
 }
 
-val ValidMimeTypes = setOf(
+val ImageMimeTypes = setOf(
     MimeType.BMP,
     MimeType.JPEG,
     MimeType.PNG,
     MimeType.GIF,
     MimeType.TIFF,
-    MimeType.PDF
 )
+
+val PdfMimeTypes = setOf(
+    MimeType.PDF,
+    MimeType.OCTET_STREAM
+)
+
+val ValidMimeTypes = ImageMimeTypes + PdfMimeTypes
 
 fun Uri.toBitmap(context: Context): Bitmap? {
     var bitmap: Bitmap? = null
@@ -140,3 +156,26 @@ fun Uri.toBitmap(context: Context): Bitmap? {
 }
 
 data class BarcodeResult(val bitmap: Bitmap, val rawValue: String)
+
+fun getFileName(context: Context, uri: Uri): String? {
+    var fileName: String? = null
+
+    if (uri.scheme == "content") {
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                fileName = it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+            }
+        }
+    }
+
+    if (fileName == null) {
+        fileName = uri.path?.substring((uri.path?.lastIndexOf("/") ?: 0) + 1)
+    }
+
+    return fileName
+}
+
+fun getFileExtension(fileName: String?): String? {
+    return fileName?.substringAfterLast(".", "")?.takeIf { it.isNotEmpty() }
+}
