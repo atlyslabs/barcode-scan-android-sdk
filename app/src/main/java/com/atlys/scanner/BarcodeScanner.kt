@@ -1,62 +1,47 @@
-package com.atlys.codescanner
+package com.atlys.scanner
 
-import android.annotation.SuppressLint
-import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.graphics.pdf.PdfRenderer.Page
 import android.net.Uri
-import android.provider.OpenableColumns
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
-
-    @SuppressLint("StaticFieldLeak")
-    private val context = application.applicationContext
+class BarcodeScanner(private val context: Context, private val listener: ScanListener) {
 
     private val barcodeScanner = BarcodeScanning.getClient()
 
-    val barcodeResults = MutableSharedFlow<List<BarcodeResult>>()
-
-    fun onFileSelected(uri: Uri) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val fileName = getFileName(context, uri)
-            val fileExtension = getFileExtension(fileName)
-            val mimeType = context.contentResolver.getType(uri)
-            if (mimeType == MimeType.PDF || (mimeType == MimeType.OCTET_STREAM && fileExtension == "pdf"))
-                scanPdf(uri)
-            else if (ImageMimeTypes.contains(mimeType))
-                scanImage(uri)
-            else
-                withContext(Dispatchers.Main) {
-                    context.toast("Unsupported file format")
-                }
-        }
+    suspend fun onScanUri(uri: Uri) = withContext(Dispatchers.IO) {
+        val fileName = getFileName(context, uri)
+        val fileExtension = getFileExtension(fileName)
+        val mimeType = context.contentResolver.getType(uri)
+        if (mimeType == MimeType.PDF || (mimeType == MimeType.OCTET_STREAM && fileExtension == "pdf"))
+            scanPdf(uri)
+        else if (ImageMimeTypes.contains(mimeType))
+            scanImage(uri)
+        else
+            withContext(Dispatchers.Main) {
+                context.toast("Unsupported file format")
+            }
     }
 
-    private suspend fun scanImage(uri: Uri) {
+    private fun scanImage(uri: Uri) {
         val bitmap = uri.toBitmap(context)!!
         val results = detectBarCode(bitmap)
-        barcodeResults.emit(results)
+        listener.onDetected(results)
     }
 
     private suspend fun scanPdf(uri: Uri) {
         try {
             val bitmaps = getPdfBitmaps(uri)
             val results = bitmaps.flatMap { detectBarCode(it) }
-            barcodeResults.emit(results)
+            listener.onDetected(results)
         } catch (e: SecurityException) {
             withContext(Dispatchers.Main) {
                 context.toast("PDF file is password protected")
@@ -115,6 +100,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 }
 
+interface ScanListener {
+    fun onDetected(results: List<BarcodeResult>)
+}
+
 object MimeType {
     const val BMP = "image/bmp"
     const val JPEG = "image/jpeg"
@@ -142,40 +131,4 @@ val PdfMimeTypes = setOf(
 
 val ValidMimeTypes = ImageMimeTypes + PdfMimeTypes
 
-fun Uri.toBitmap(context: Context): Bitmap? {
-    var bitmap: Bitmap? = null
-    try {
-        val contentResolver = context.contentResolver
-        val inputStream = contentResolver.openInputStream(this)
-        bitmap = BitmapFactory.decodeStream(inputStream)
-        inputStream?.close()
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-    return bitmap
-}
-
-data class BarcodeResult(val bitmap: Bitmap, val rawValue: String)
-
-fun getFileName(context: Context, uri: Uri): String? {
-    var fileName: String? = null
-
-    if (uri.scheme == "content") {
-        val cursor = context.contentResolver.query(uri, null, null, null, null)
-        cursor?.use {
-            if (it.moveToFirst()) {
-                fileName = it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
-            }
-        }
-    }
-
-    if (fileName == null) {
-        fileName = uri.path?.substring((uri.path?.lastIndexOf("/") ?: 0) + 1)
-    }
-
-    return fileName
-}
-
-fun getFileExtension(fileName: String?): String? {
-    return fileName?.substringAfterLast(".", "")?.takeIf { it.isNotEmpty() }
-}
+data class BarcodeResult(val bitmap: Bitmap?, val rawValue: String)

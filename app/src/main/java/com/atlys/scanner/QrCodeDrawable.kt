@@ -1,4 +1,4 @@
-package com.atlys.codescanner
+package com.atlys.scanner
 
 import android.graphics.Canvas
 import android.graphics.Color

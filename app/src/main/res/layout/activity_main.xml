@@ -5,9 +5,9 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.atlys.codescanner.MainActivity">
+    tools:context="com.atlys.scanner.MainActivity">
 
-    <com.atlys.codescanner.BarcodeScannerView
+    <com.atlys.scanner.BarcodeScannerView
         android:id="@+id/barcode_scanner_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"

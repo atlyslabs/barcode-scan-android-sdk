@@ -1,4 +1,4 @@
-package com.atlys.codescanner
+package com.atlys.scanner
 
 import android.content.Context
 import android.util.AttributeSet
@@ -12,7 +12,7 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.atlys.codescanner.databinding.LayoutBarcodeScannerBinding
+import com.atlys.scanner.databinding.LayoutBarcodeScannerBinding
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import java.util.concurrent.ExecutorService
@@ -30,9 +30,11 @@ class BarcodeScannerView @JvmOverloads constructor(
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient()
     private lateinit var lifecycleOwner: LifecycleOwner
+    private var listener: ScanListener? = null
 
-    fun bindLifecycle(lifecycleOwner: LifecycleOwner) {
+    fun init(lifecycleOwner: LifecycleOwner, listener: ScanListener) {
         this.lifecycleOwner = lifecycleOwner
+        this.listener = listener
         lifecycleOwner.lifecycle.addObserver(this)
     }
 
@@ -46,7 +48,7 @@ class BarcodeScannerView @JvmOverloads constructor(
 
         cameraController.setImageAnalysisAnalyzer(
             cameraExecutor,
-            BarcodeScanAnalyzer(barcodeScanner, previewView)
+            BarcodeScanAnalyzer(barcodeScanner, previewView, listener)
         )
 
         cameraController.imageAnalysisResolutionSelector = ResolutionSelector.Builder()

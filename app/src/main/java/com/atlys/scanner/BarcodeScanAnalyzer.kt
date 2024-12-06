@@ -1,4 +1,4 @@
-package com.atlys.codescanner
+package com.atlys.scanner
 
 import android.graphics.Bitmap
 import android.graphics.Matrix
@@ -13,7 +13,8 @@ import com.google.mlkit.vision.common.InputImage
 
 class BarcodeScanAnalyzer(
     private val barcodeScanner: BarcodeScanner,
-    private val previewView: PreviewView
+    private val previewView: PreviewView,
+    private val listener: ScanListener?
 ) : ImageAnalysis.Analyzer {
 
     private lateinit var bitmapBuffer: Bitmap
@@ -49,6 +50,11 @@ class BarcodeScanAnalyzer(
             val qrCodeDrawable = QrCodeDrawable(barcodes, scaleX, scaleY)
             previewView.overlay.clear()
             previewView.overlay.add(qrCodeDrawable)
+            val results = barcodes.mapNotNull {
+                val rawValue = it.rawValue ?: return@mapNotNull null
+                BarcodeResult(bitmap = null, rawValue = rawValue)
+            }
+            listener?.onDetected(results)
         }
     }
 }

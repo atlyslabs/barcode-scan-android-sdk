@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.atlys.codescanner"
+    namespace = "com.atlys.scanner"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.atlys.codescanner"
+        applicationId = "com.atlys.scanner"
         minSdk = 21
         targetSdk = 35
         versionCode = 1

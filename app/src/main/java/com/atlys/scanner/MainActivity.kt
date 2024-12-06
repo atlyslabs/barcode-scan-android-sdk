@@ -1,11 +1,10 @@
-package com.atlys.codescanner
+package com.atlys.scanner
 
 import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -15,7 +14,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
@@ -23,15 +21,20 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import com.atlys.codescanner.databinding.ActivityMainBinding
-import kotlinx.coroutines.flow.collectLatest
+import com.atlys.scanner.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
-import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewBinding: ActivityMainBinding
-    private val viewModel: MainViewModel by viewModels()
+
+    private val scanListener = object : ScanListener {
+        override fun onDetected(results: List<BarcodeResult>) {
+            if (results.isNotEmpty())
+                showBottomSheet(results)
+        }
+    }
+    private val barcodeScanner = BarcodeScanner(this, scanListener)
 
     private val applicationSettings =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -51,10 +54,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-    private val pickFileLauncher =
+    private val filePicker =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-            // Handle the selected file URI
-            uri?.let { viewModel.onFileSelected(uri) }
+            uri?.let {
+                lifecycleScope.launch {
+                    barcodeScanner.onScanUri(uri)
+                }
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,18 +74,23 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        viewBinding.barcodeScannerView.bindLifecycle(this)
+        setupBarcodeScannerView()
+        setupOnClickListener()
+    }
+
+    private fun setupBarcodeScannerView() {
+        viewBinding.barcodeScannerView.init(this, scanListener)
         if (isPermissionGranted(Manifest.permission.CAMERA)) {
             viewBinding.barcodeScannerView.startScan()
         } else {
             toast("Please grant camera permission")
             requestCameraPermission()
         }
-        lifecycleScope.launch {
-            viewModel.barcodeResults.collectLatest {
-                if (it.isNotEmpty())
-                    showBottomSheet(it)
-            }
+    }
+
+    private fun setupOnClickListener() {
+        viewBinding.buttonSelectFile.onClick {
+            filePicker.launch(ValidMimeTypes.toTypedArray())
         }
     }
 
@@ -120,10 +131,4 @@ private fun shouldShowRequestPermissionRationale(activity: Activity): Boolean {
 
 fun View.onClick(onClick: () -> Unit) {
     this.setOnClickListener { onClick() }
-}
-
-fun File.saveBitmap(bitmap: Bitmap) {
-    this.outputStream().use { outputStream ->
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-    }
 }

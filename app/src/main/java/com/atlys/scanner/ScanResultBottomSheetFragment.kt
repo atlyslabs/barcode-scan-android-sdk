@@ -1,4 +1,4 @@
-package com.atlys.codescanner
+package com.atlys.scanner
 
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.atlys.codescanner.databinding.FragmentScanResultBottomSheetBinding
-import com.atlys.codescanner.databinding.ItemBarcodeResultBinding
+import com.atlys.scanner.databinding.FragmentScanResultBottomSheetBinding
+import com.atlys.scanner.databinding.ItemBarcodeResultBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class ScanResultBottomSheetFragment : BottomSheetDialogFragment() {
