@@ -1,12 +1,13 @@
 package com.atlys.scanner
 
-import android.graphics.Bitmap
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.atlys.barcode_scan.BarcodeResult
 import com.atlys.scanner.databinding.FragmentScanResultBottomSheetBinding
 import com.atlys.scanner.databinding.ItemBarcodeResultBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -16,7 +17,9 @@ class ScanResultBottomSheetFragment : BottomSheetDialogFragment() {
     private var _binding: FragmentScanResultBottomSheetBinding? = null
     private val binding get() = _binding!!
 
-    var barcodeResults: List<com.atlys.barcode_scan.BarcodeResult> = emptyList()
+    var barcodeResults: List<BarcodeResult> = emptyList()
+
+    var onDismissListener: (() -> Unit)? = null
 
     override fun getTheme(): Int {
         return R.style.RoundedBottomSheetDialog
@@ -36,27 +39,28 @@ class ScanResultBottomSheetFragment : BottomSheetDialogFragment() {
 
         // Initialize RecyclerView using View Binding
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
-        val test = com.atlys.barcode_scan.BarcodeResult(
-            bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888),
-            rawValue = "Test Value from Qr code Test Value from Qr code"
-        )
         binding.recyclerView.adapter = BarcodeResultAdapter(barcodeResults)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null // Prevent memory leaks
+        _binding = null
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        onDismissListener?.invoke()
     }
 
 }
 
-class BarcodeResultAdapter(private val items: List<com.atlys.barcode_scan.BarcodeResult>) :
+class BarcodeResultAdapter(private val items: List<BarcodeResult>) :
     RecyclerView.Adapter<BarcodeResultAdapter.ViewHolder>() {
 
     inner class ViewHolder(private val binding: ItemBarcodeResultBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: com.atlys.barcode_scan.BarcodeResult) {
+        fun bind(item: BarcodeResult) {
             binding.imageView.setImageBitmap(item.bitmap)
             binding.textView.text = item.rawValue
         }

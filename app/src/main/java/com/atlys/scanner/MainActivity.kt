@@ -31,10 +31,11 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewBinding: ActivityMainBinding
+    private var isBottomSheetShown = false
 
     private val scanListener = object : ScanListener {
         override fun onDetected(results: List<BarcodeResult>) {
-            if (results.isNotEmpty())
+            if (results.isNotEmpty() && !isBottomSheetShown)
                 showBottomSheet(results)
         }
     }
@@ -99,7 +100,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showBottomSheet(barcodeResults: List<BarcodeResult>) {
+        isBottomSheetShown = true
         val bottomSheet = ScanResultBottomSheetFragment()
+        bottomSheet.onDismissListener = {
+            isBottomSheetShown = false
+        }
         bottomSheet.barcodeResults = barcodeResults
         bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
