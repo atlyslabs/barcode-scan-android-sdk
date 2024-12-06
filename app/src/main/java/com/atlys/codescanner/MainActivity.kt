@@ -16,33 +16,21 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.resolutionselector.ResolutionSelector
-import androidx.camera.core.resolutionselector.ResolutionStrategy
-import androidx.camera.view.LifecycleCameraController
-import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.atlys.codescanner.databinding.ActivityMainBinding
-import com.google.mlkit.vision.barcode.BarcodeScanner
-import com.google.mlkit.vision.barcode.BarcodeScanning
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewBinding: ActivityMainBinding
-    private var cameraExecutor: ExecutorService? = null
-    private var barcodeScanner: BarcodeScanner? = null
     private val viewModel: MainViewModel by viewModels()
 
     private val applicationSettings =
@@ -55,7 +43,7 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
-                startCamera()
+                viewBinding.barcodeScannerView.startScan()
             } else {
                 toast("Please grant camera permission from settings")
                 if (shouldShowRequestPermissionRationale(this))
@@ -80,15 +68,12 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        cameraExecutor = Executors.newSingleThreadExecutor()
+        viewBinding.barcodeScannerView.bindLifecycle(this)
         if (isPermissionGranted(Manifest.permission.CAMERA)) {
-            startCamera()
+            viewBinding.barcodeScannerView.startScan()
         } else {
             toast("Please grant camera permission")
             requestCameraPermission()
-        }
-        viewBinding.buttonSelectFile.onClick {
-            pickFileLauncher.launch(ValidMimeTypes.toTypedArray())
         }
         lifecycleScope.launch {
             viewModel.barcodeResults.collectLatest {
@@ -111,38 +96,6 @@ class MainActivity : AppCompatActivity() {
     private fun isPermissionGranted(permission: String): Boolean {
         return ContextCompat.checkSelfPermission(this, permission) ==
                 PackageManager.PERMISSION_GRANTED
-    }
-
-    @OptIn(ExperimentalGetImage::class)
-    private fun startCamera() {
-        var cameraController = LifecycleCameraController(baseContext)
-        val previewView: PreviewView = viewBinding.previewView
-
-        barcodeScanner = BarcodeScanning.getClient()
-
-        cameraController.setImageAnalysisAnalyzer(
-            cameraExecutor!!,
-            BarcodeScanAnalyzer(barcodeScanner!!, previewView)
-        )
-
-        cameraController.imageAnalysisResolutionSelector = ResolutionSelector.Builder()
-            .setResolutionStrategy(
-                ResolutionStrategy(
-                    android.util.Size(600, 600),
-                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
-                )
-            )
-            .setAllowedResolutionMode(ResolutionSelector.PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE)
-            .build()
-
-        cameraController.bindToLifecycle(this)
-        previewView.controller = cameraController
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor?.shutdown()
-        barcodeScanner?.close()
     }
 
 }
