@@ -16,7 +16,7 @@ class ScanResultBottomSheetFragment : BottomSheetDialogFragment() {
     private var _binding: FragmentScanResultBottomSheetBinding? = null
     private val binding get() = _binding!!
 
-    var barcodeResults: List<BarcodeResult> = emptyList()
+    var barcodeResults: List<com.atlys.barcode_scan.BarcodeResult> = emptyList()
 
     override fun getTheme(): Int {
         return R.style.RoundedBottomSheetDialog
@@ -36,7 +36,7 @@ class ScanResultBottomSheetFragment : BottomSheetDialogFragment() {
 
         // Initialize RecyclerView using View Binding
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
-        val test = BarcodeResult(
+        val test = com.atlys.barcode_scan.BarcodeResult(
             bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888),
             rawValue = "Test Value from Qr code Test Value from Qr code"
         )
@@ -50,13 +50,13 @@ class ScanResultBottomSheetFragment : BottomSheetDialogFragment() {
 
 }
 
-class BarcodeResultAdapter(private val items: List<BarcodeResult>) :
+class BarcodeResultAdapter(private val items: List<com.atlys.barcode_scan.BarcodeResult>) :
     RecyclerView.Adapter<BarcodeResultAdapter.ViewHolder>() {
 
     inner class ViewHolder(private val binding: ItemBarcodeResultBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: BarcodeResult) {
+        fun bind(item: com.atlys.barcode_scan.BarcodeResult) {
             binding.imageView.setImageBitmap(item.bitmap)
             binding.textView.text = item.rawValue
         }

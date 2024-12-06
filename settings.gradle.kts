@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "CodeScanner"
 include(":app")
- 
+include(":barcode-scan")

@@ -21,6 +21,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.atlys.barcode_scan.BarcodeResult
+import com.atlys.barcode_scan.BarcodeScanner
+import com.atlys.barcode_scan.ScanListener
+import com.atlys.barcode_scan.ValidMimeTypes
 import com.atlys.scanner.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 

@@ -1,4 +1,4 @@
-package com.atlys.scanner
+package com.atlys.barcode_scan
 
 import android.graphics.Bitmap
 import android.graphics.Matrix

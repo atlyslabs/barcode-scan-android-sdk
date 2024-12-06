@@ -1,10 +1,11 @@
-package com.atlys.scanner
+package com.atlys.barcode_scan
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.widget.Toast
 import java.io.File
 
 fun getFileName(context: Context, uri: Uri): String? {
@@ -47,4 +48,8 @@ fun File.saveBitmap(bitmap: Bitmap) {
     this.outputStream().use { outputStream ->
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
     }
+}
+
+fun Context.toast(message: String, duration: Int = Toast.LENGTH_LONG) {
+    Toast.makeText(this, message, duration).show()
 }

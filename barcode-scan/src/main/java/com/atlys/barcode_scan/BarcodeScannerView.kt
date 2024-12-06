@@ -1,4 +1,4 @@
-package com.atlys.scanner
+package com.atlys.barcode_scan
 
 import android.content.Context
 import android.util.AttributeSet
@@ -12,7 +12,7 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.atlys.scanner.databinding.LayoutBarcodeScannerBinding
+import com.atlys.barcode_scan.databinding.LayoutBarcodeScannerBinding
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import java.util.concurrent.ExecutorService
