@@ -9,6 +9,7 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.view.PreviewView
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 
 class BarcodeScanAnalyzer(
@@ -50,11 +51,26 @@ class BarcodeScanAnalyzer(
             val qrCodeDrawable = QrCodeDrawable(barcodes, scaleX, scaleY)
             previewView.overlay.clear()
             previewView.overlay.add(qrCodeDrawable)
-            val results = barcodes.mapNotNull {
-                val rawValue = it.rawValue ?: return@mapNotNull null
-                BarcodeResult(bitmap = null, rawValue = rawValue)
-            }
+            val results = barcodes.map { getBarcodeResult(croppedBitmap, it) }
             listener?.onDetected(results)
         }
+    }
+
+    private fun getBarcodeResult(bitmap: Bitmap, barcode: Barcode): BarcodeResult {
+        val boundingBox = barcode.boundingBox!!
+
+        // Ensure the bounding box stays within the bitmap bounds
+        val croppedBitmap = Bitmap.createBitmap(
+            bitmap,
+            boundingBox.left.coerceIn(0, bitmap.width),
+            boundingBox.top.coerceIn(0, bitmap.height),
+            boundingBox.width().coerceIn(0, bitmap.width - boundingBox.left),
+            boundingBox.height().coerceIn(0, bitmap.height - boundingBox.top)
+        )
+
+        return BarcodeResult(
+            bitmap = croppedBitmap,
+            rawValue = barcode.rawValue!!
+        )
     }
 }

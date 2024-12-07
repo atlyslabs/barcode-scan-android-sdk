@@ -16,6 +16,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url = uri("https://maven.pkg.github.com/atlyslabs/barcode-scan-android-sdk")
+        }
     }
 }
 
