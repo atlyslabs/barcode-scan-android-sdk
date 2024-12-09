@@ -54,13 +54,14 @@ publishing {
             afterEvaluate {
                 from(components["release"])
             }
-            groupId = "com.atlys"
+            //groupId = "com.atlys"
+            groupId = "com.github.atlyslabs"
             artifactId = "barcode-scan"
             version = "0.0.2"
         }
     }
 
-    repositories {
+    /*repositories {
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/atlyslabs/barcode-scan-android-sdk")
@@ -69,7 +70,7 @@ publishing {
                 password = secretProperties.getProperty("GITHUB_TOKEN")
             }
         }
-    }
+    }*/
 }
 
 fun getSecretProperties(filePath: String = "secret.properties"): Properties {

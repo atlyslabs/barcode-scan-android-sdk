@@ -40,7 +40,8 @@ android {
 
 dependencies {
     //implementation(project(":barcode-scan"))
-    implementation("com.atlys:barcode-scan:0.0.2")
+    //implementation("com.atlys:barcode-scan:0.0.2")
+    implementation("com.github.atlyslabs:barcode-scan-android-sdk:v0.0.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)

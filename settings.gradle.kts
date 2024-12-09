@@ -19,6 +19,7 @@ dependencyResolutionManagement {
         maven {
             url = uri("https://maven.pkg.github.com/atlyslabs/barcode-scan-android-sdk")
         }
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
